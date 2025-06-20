@@ -1,5 +1,5 @@
 ---
-title: Template Final Assignment
+title: GAIA agent Framework 
 emoji: 🕵🏻‍♂️
 colorFrom: indigo
 colorTo: indigo
