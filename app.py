@@ -4,8 +4,27 @@ import requests
 import pandas as pd
 from agent_smolagents import SmolagentsAgent
 import random
+from dotenv import load_dotenv
 
+
+load_dotenv()
 DEFAULT_API_URL = "https://agents-course-unit4-scoring.hf.space"
+
+def get_agent_info():
+    """Get agent code information at startup."""
+    space_id = os.getenv("SPACE_ID")
+    if space_id:
+        agent_code = f"https://huggingface.co/spaces/{space_id}/tree/main"
+        return f"**Agent Code Repository:** {agent_code}\n**Space ID:** {space_id}"
+    else:
+        return "**Agent Code Repository:** https://github.com/your-repo\n**Space ID:** Not configured"
+
+def update_profile_info(profile: gr.OAuthProfile | None):
+    """Update profile information display when login state changes."""
+    if profile:
+        return f"**Logged in as:** {profile.username}\n**Name:** {profile.name or 'Not provided'}\n**Profile URL:** https://huggingface.co/{profile.username}"
+    else:
+        return "**Status:** Not logged in. Please log in to run evaluation."
 
 def run_and_submit_all(profile: gr.OAuthProfile | None):
     """Fetches questions, runs the SmolagentsAgent, and submits answers."""
@@ -85,16 +104,33 @@ with gr.Blocks() as demo:
         **Note:** This process may take several minutes as the agent processes all questions.
         """
     )
-
-    gr.LoginButton()
+    
+    # Agent Information Section
+    gr.Markdown("## Agent Information")
+    agent_info_display = gr.Markdown(get_agent_info())
+    
+    # Profile Information Section
+    gr.Markdown("## Profile Information")
+    profile_info_display = gr.Markdown(update_profile_info(None))
+    
+    # Login and Evaluation Section
+    gr.Markdown("## Evaluation")
+    login_button = gr.LoginButton()
     run_button = gr.Button("Run Evaluation & Submit All Answers")
     status_output = gr.Textbox(label="Status / Results", lines=5, interactive=False)
     results_table = gr.DataFrame(label="Questions and Agent Answers", wrap=True)
 
+    # Update profile info when login state changes
+    login_button.click(
+        fn=update_profile_info,
+        outputs=[profile_info_display]
+    )
+    
     run_button.click(
         fn=run_and_submit_all,
         outputs=[status_output, results_table]
     )
 
 if __name__ == "__main__":
+    print(get_agent_info())
     demo.launch(debug=True, share=False)
